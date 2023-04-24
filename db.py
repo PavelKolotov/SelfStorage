@@ -3,6 +3,26 @@ import sqlite3
 from globals import USER_NOT_FOUND, ACCESS_DENIED, ACCESS_ALLOWED
 
 
+def update_user_data(tg_name, fields=(), values=()):
+    if fields:
+        assigments = []
+        for i, field in enumerate(fields):
+            value = values[i]
+            if type(value) is str:
+                assigments.append(f"{field}='{value}'")
+            else:
+                assigments.append(f"{field}={value}")
+        assigments = ", ".join(assigments)
+        cur: sqlite3.Cursor = con.execute(
+            f"Update users set {assigments} where tg_name='{tg_name}'"
+        )
+        con.commit()
+        cur.close()
+        return cur.rowcount
+    else:
+        return 0
+
+
 def dict_factory(cursor, row):
     fields = [column[0] for column in cursor.description]
     return {key: value for key, value in zip(fields, row)}
@@ -58,6 +78,21 @@ def add_new_user(name, phone, tg_name, tg_user_id, user_group=1, access=1):
         cur.close()
         return cur.lastrowid
 
+def add_new_admin(tg_name, user_group=2, access=1):
+    cur: sqlite3.Cursor = con.execute(f"select * "
+                                      f"from users where tg_name='{tg_name if tg_name else 0}'")
+    row = cur.fetchone()
+    cur.close()
+    if not row:
+        data = (tg_name, user_group, access)
+        cur = con.execute(
+            'insert into users '
+            '(tg_name, user_group, access) '
+            'values( ?, ?, ?)', data)
+        con.commit()
+        cur.close()
+        return cur.lastrowid
+
 
 def get_number_box(type):
     cur: sqlite3.Cursor
@@ -94,7 +129,7 @@ def add_order(client_id, client_phone, client_address, agreement, value, weight,
 def get_user_orders(chat_id):
     cur: sqlite3.Cursor = con.execute(
         f'''SELECT orders.order_id, users.name,  orders.client_phone, orders.client_address, 
-        orders.inventory, orders.date_reg, orders.date_end, orders.status
+        orders.inventory, orders.date_reg, orders.date_end, orders.status, orders.box_number
         FROM users JOIN orders ON users.tg_user_id = orders.client_id
         WHERE orders.status IN ("1", "2", "3", "4", "7") AND orders.client_id = "{chat_id}"'''
     )
@@ -127,6 +162,13 @@ def change_status(order_id, status):
     return cur.lastrowid
 
 
+def change_box_number(order_id, box_number):
+    cur = con.execute(f'UPDATE orders SET box_number = {box_number} WHERE order_id LIKE "{order_id}"')
+    con.commit()
+    cur.close()
+    return cur.lastrowid
+
+
 
 def change_group(order_id, group):
     cur = con.execute(f'UPDATE orders SET group = {group} WHERE order_id LIKE "{order_id}"')
@@ -153,7 +195,8 @@ def get_order(order_id):
 
 
 def get_orders_by_status(status):
-    cur: sqlite3.Cursor = con.execute(f'select * from orders where status={status}')
+    cur: sqlite3.Cursor = con.execute(f'select * from orders INNER JOIN users ON orders.client_id = users.tg_user_id '
+                                      f'where status={status}')
     row = cur.fetchall()
     cur.close()
     return row
@@ -183,3 +226,5 @@ def get_date_end_active_orders():
     rows = cur.fetchall()
     cur.close()
     return rows
+
+

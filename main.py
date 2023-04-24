@@ -13,11 +13,11 @@ calls_map = {
     'rent_to_client': calls.get_rent_to_client,
     'client_pantry': calls.get_client_pantry,
     'overdue_storage': calls.get_overdue_storage,
-    'storage_orders': calls.get_storage_orders,
-    'return_orders': calls.get_return_orders,
-    'return_orders_delivery': calls.get_return_orders_delivery,
+    # 'storage_orders': calls.get_storage_orders,
+    # 'return_orders': calls.get_return_orders,
+    # 'return_orders_delivery': calls.get_return_orders_delivery,
     'add_admin': calls.add_admin,
-    'status_info': calls.get_status_info,
+    # 'status_info': calls.get_status_info,
     'stats': calls.get_stats,
 }
 
@@ -26,7 +26,8 @@ calls_id_map = {
     'open_box_id': calls.open_box_id,
     'arrange_delivery_id': calls.arrange_delivery_id,
     'close_lease_id': calls.close_lease_id,
-
+    'get_storage_orders_id': calls.get_storage_orders_id,
+    'accept_order_id': calls.accept_order_id,
 }
 
 
@@ -57,8 +58,7 @@ def handle_buttons(call):
         return
     source = user['callback_source']
     if source and not call.message.id in user['callback_source']:
-        bot.send_message(call.message.chat.id, 'Кнопка не актуальна\n'
-                                               '/menu - показать основное меню')
+        bot.send_message(call.message.chat.id, 'Кнопка не актуальна\n')
         return
     elif (dt.datetime.now() - dt.timedelta(0, 180)) > dt.datetime.fromtimestamp(call.message.date):
         bot.send_message(call.message.chat.id, 'Срок действия кнопки истек')
@@ -78,9 +78,10 @@ def handle_buttons(call):
         return
     if 'id' in btn_command:
         parts = btn_command.split(':')
-        key_func = parts[-1]
+        key_func = parts[1]
         func_name = parts[0]
-        calls_id_map[func_name](call.message, key_func)
+        func_arg = parts[-1]
+        calls_id_map[func_name](call.message, key_func, func_arg)
         return
     else:
         calls_map[call.data](call.message)
@@ -92,8 +93,8 @@ def runBot():
 
 
 def runSchedulers():
-    schedule.every(1).day.at("12:00").do(calls.send_notification)  # - запуск каждый день в определенное время
-    # schedule.every(10).seconds.do(calls.send_notification)  # - запуск каждые 10 секунд
+    # schedule.every(1).day.at("12:00").do(calls.send_notification)  # - запуск каждый день в определенное время
+    schedule.every(10).seconds.do(calls.send_notification)  # - запуск каждые 10 секунд
     while True:
         schedule.run_pending()
         time.sleep(1)
