@@ -498,9 +498,9 @@ def get_storage_orders_id(message: telebot.types.Message, status, arg=0):
 
 def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
     order = db.get_order(order_id)
+    user = chats[message.chat.id]
+    user['callback'] = 'accept_order_id'
     if status == '1':
-        user = chats[message.chat.id]
-        user['callback'] = 'accept_order_id'
         if step == 0:
             msg = bot.send_message(
                 message.chat.id,    f'Введите номер телефона клиента. '
@@ -666,15 +666,15 @@ def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
             bot.send_message(message.chat.id, f'Варианты действий ', reply_markup=markup_admin)
             user['callback'] = None
             user['callback_source'] = []
-        elif status in ['3', '4']:
-            db.change_status(order_id, 5)
-            bot.send_message(order['client_id'], f'Заявка на возврат/доставку #{order_id} выполнена.',
-                             reply_markup=markup_remove)
-            bot.send_message(message.chat.id, f'Заявка на возврат/доставку #{order_id} выполнена.',
-                             reply_markup=markup_remove)
-            bot.send_message(message.chat.id, f'Варианты действий ', reply_markup=markup_admin)
-            user['callback'] = None
-            user['callback_source'] = []
+    elif status in ['3', '4']:
+        db.change_status(order_id, 5)
+        bot.send_message(order['client_id'], f'Заявка на возврат/доставку #{order_id} выполнена.',
+                         reply_markup=markup_remove)
+        bot.send_message(message.chat.id, f'Заявка на возврат/доставку #{order_id} выполнена.',
+                         reply_markup=markup_remove)
+        bot.send_message(message.chat.id, f'Варианты действий ', reply_markup=markup_admin)
+        user['callback'] = None
+        user['callback_source'] = []
 
 def get_stats(message: telebot.types.Message):
     stats = f'''
