@@ -1,10 +1,10 @@
 import datetime as dt
 import threading
 import time
-
 import schedule
-
 import bot_functions as calls
+
+
 from globals import *
 
 
@@ -13,11 +13,7 @@ calls_map = {
     'rent_to_client': calls.get_rent_to_client,
     'client_pantry': calls.get_client_pantry,
     'overdue_storage': calls.get_overdue_storage,
-    # 'storage_orders': calls.get_storage_orders,
-    # 'return_orders': calls.get_return_orders,
-    # 'return_orders_delivery': calls.get_return_orders_delivery,
     'add_admin': calls.add_admin,
-    # 'status_info': calls.get_status_info,
     'stats': calls.get_stats,
 }
 
@@ -85,7 +81,6 @@ def handle_buttons(call):
         return
     else:
         calls_map[call.data](call.message)
-
 
 
 def runBot():

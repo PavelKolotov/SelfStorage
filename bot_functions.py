@@ -7,16 +7,12 @@ import db
 from telebot.util import quick_markup
 from datetime import timedelta
 from globals import (
-    bot, agreement, USER_NOT_FOUND, ACCESS_DENIED, UG_CLIENT, ACCESS_DUE_TIME, ACCESS_ALLOWED,
+    bot, agreement,  ACCESS_DENIED, UG_CLIENT, ACCESS_DUE_TIME,
     markup_client, markup_admin, markup_cancel_step, markup_skip, markup_agreement, markup_type_rent, markup_remove,
     UG_ADMIN, INPUT_DUE_TIME, chats, rate_box, rate_rack, rate_weight,
-    # markup_accept, markup_next, markup_add_admin,
-    # markup_skip_or_menu,
-    # rules, ADMINS
+
 )
 
-
-# COMMON FUNCTIONS
 
 def start_bot(message: telebot.types.Message):
     user_name = message.from_user.username
@@ -88,7 +84,6 @@ def check_user_in_cache(msg: telebot.types.Message):
         return None
     else:
         return user
-
 
 
 def show_main_menu(chat_id, group):
@@ -166,8 +161,9 @@ def get_rent_to_client(message: telebot.types.Message, step=0):
     elif step == 3:
         user['agreement'] = message.text
         if user['agreement'] == 'Принять':
-            msg = bot.send_message(message.chat.id, 'Выбирите тип аренды. Бокс для хранения или стеллаж для документов.'
-                                   , parse_mode='html', reply_markup=markup_type_rent)
+            msg = bot.send_message(message.chat.id, 'Выбирите тип аренды. '
+                                                    'Бокс для хранения или стеллаж для документов.',
+                                   parse_mode='html', reply_markup=markup_type_rent)
             user['callback_source'] = [msg.id, ]
             bot.register_next_step_handler(msg, get_rent_to_client, 4)
             user['step_due'] = dt.datetime.now() + dt.timedelta(0, INPUT_DUE_TIME)
@@ -283,8 +279,8 @@ def get_rent_to_client(message: telebot.types.Message, step=0):
         user['callback_source'] = []
 
 
-def get_price(type, value=0, weight=0, shelf_life=0):
-    if type == 'Бокс':
+def get_price(type_box, value=0, weight=0, shelf_life=0):
+    if type_box == 'Бокс':
         price = int(value) * int(shelf_life) * rate_box + (int(weight) * rate_weight)
     else:
         price = int(value) * rate_rack
@@ -346,8 +342,6 @@ def get_client_pantry(message: telebot.types.Message):
         client_calls.append(msg.id)
 
 
-
-
 def cancel_app_id(message: telebot.types.Message, order_id, status=5):
     callback_source: list = chats[message.chat.id]['callback_source']
     db.change_status(order_id, status)
@@ -391,9 +385,8 @@ def arrange_delivery_id(message: telebot.types.Message, order_id, step=0):
         user['address'] = message.text
         db.change_status(order_id, 3)
         db.change_delyvery_data(order_id, user['number'], user['address'])
-        msg = bot.send_message(message.chat.id,
-                               'Заказ принят, в течение часа с Вами свяжутся для согласования времени доставки '
-                               , reply_markup=markup_client)
+        bot.send_message(message.chat.id, 'Заказ принят, в течение часа с Вами свяжутся для согласования '
+                                          'времени доставки', reply_markup=markup_client)
         user['callback'] = None
         user['callback_source'] = []
 
@@ -471,7 +464,6 @@ def add_admin(message: telebot.types.Message, step=0):
                                           reply_markup=markup_admin)
 
 
-
 def get_storage_orders_id(message: telebot.types.Message, status, arg=0):
     orders = db.get_orders_by_status(status)
     client_calls: list = chats[message.chat.id]['callback_source']
@@ -496,6 +488,7 @@ def get_storage_orders_id(message: telebot.types.Message, status, arg=0):
                                reply_markup=quick_markup(buttons))
         client_calls.append(msg.id)
 
+
 def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
     order = db.get_order(order_id)
     user = chats[message.chat.id]
@@ -519,8 +512,8 @@ def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
             else:
                 user['number'] = message.text
             msg = bot.send_message(message.chat.id,
-                                   'Выбирите тип аренды. Бокс для хранения или стеллаж для документов.'
-                                   , parse_mode='html', reply_markup=markup_type_rent)
+                                   'Выбирите тип аренды. Бокс для хранения или стеллаж для документов.',
+                                   parse_mode='html', reply_markup=markup_type_rent)
             user['callback_source'] = [msg.id, ]
             bot.register_next_step_handler(msg, accept_order_id, order_id, status, 2)
             user['step_due'] = dt.datetime.now() + dt.timedelta(0, INPUT_DUE_TIME)
@@ -575,7 +568,7 @@ def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
                     user['value'] = int(message.text)
             except:
                 bot.send_message(message.chat.id, 'Введенное значение не корректно',
-                                       parse_mode='html', reply_markup=markup_admin)
+                                 parse_mode='html', reply_markup=markup_admin)
                 user['callback'] = None
                 user['callback_source'] = []
                 return
@@ -598,7 +591,7 @@ def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
                     user['weight'] = int(message.text)
             except:
                 bot.send_message(message.chat.id, 'Введенное значение не корректно',
-                                       parse_mode='html', reply_markup=markup_admin)
+                                 parse_mode='html', reply_markup=markup_admin)
                 user['callback'] = None
                 user['callback_source'] = []
                 return
@@ -620,7 +613,7 @@ def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
                     user['shelf_life'] = int(message.text)
             except:
                 bot.send_message(message.chat.id, 'Введенное значение не корректно',
-                                       parse_mode='html', reply_markup=markup_admin)
+                                 parse_mode='html', reply_markup=markup_admin)
                 user['callback'] = None
                 user['callback_source'] = []
                 return
@@ -676,6 +669,7 @@ def accept_order_id(message: telebot.types.Message, order_id, status, step=0):
         user['callback'] = None
         user['callback_source'] = []
 
+
 def get_stats(message: telebot.types.Message):
     stats = f'''
     Всего заказов {db.get_orders_count()}
@@ -693,6 +687,7 @@ def get_stats(message: telebot.types.Message):
     user['callback'] = None
     user['callback_source'] = []
 
+
 def send_notification():
     orders = db.get_date_end_active_orders()
     notification_time = [14, 7, 3, 0]
@@ -704,9 +699,8 @@ def send_notification():
         if days_left in notification_time:
             bot.send_message(order['client_id'],
                                    text=f"Уважаемый клиент. По заказу №{order['order_id']} ({order['inventory']})"
-                                        f" - через *{days_left} дней* заканчивается срок хранение. \nДля продления договора "
-                                        f"свяжитесь с администратором",
-                                   parse_mode='html')
+                                        f" - через *{days_left} дней* заканчивается срок хранение. \n"
+                                        f"Для продления договора свяжитесь с администратором", parse_mode='html')
         elif days_left < 0:
             db.change_status(order['order_id'], 7)
             if days_left in notification_exceeding_time:
@@ -714,375 +708,10 @@ def send_notification():
                                    text=f"*Внимание!* Уважаемый клиент. По заказу №{order['order_id']} ({order['inventory']})"
                                         f" *срок хранения превышен на {-1 * days_left} дней*!. \nНачисляется оплата по тарифу, "
                                         f"повышенному на 10%. \nЕсли не заберете вещи в течении 6 месяцев (180 дней) после прекращения договора"
-                                        f" - вы их потеряете",
-                                   parse_mode='html')
+                                        f" - вы их потеряете", parse_mode='html')
         elif days_left <= -181:
             bot.send_message(order['client_id'],
                                    text=f"*Внимание!* Уважаемый клиент. По заказу №{order['order_id']} ({order['inventory']})"
                                         f" *срок хранения превышен на {-1 * days_left} дней*!. \n"
-                                        f"*Заказ аннулирован*",
-                                   parse_mode='html')
+                                        f"*Заказ аннулирован*", parse_mode='html')
             db.change_status(order['order_id'], 8)
-
-
-# def get_overdue_storage(message: telebot.types.Message, step=0, index=0):
-#     '''To fix: После нажатия кнопки нужно отправить не пустое сообщение
-#     '''
-#     orders = db.get_orders_by_status(7)
-#     user = chats[message.chat.id]
-#     try:
-#         orders = user['orders']
-#     except KeyError:
-#         pass
-#     if orders:
-#         if step == 0:
-#             user['index'] = index
-#
-#             try:
-#                 order = orders[user['index']]
-#                 user['order_id'] = order['order_id']
-#             except IndexError:
-#                 user['index'] = 0
-#                 order = orders[0]
-#
-#                 bot.send_message(message.chat.id, f'Вы возвращены в начало списка')
-#             msg_text = ''
-#             for item, value in order.items():
-#                 msg_text += f'{item} : {value} \n'
-#             msg = bot.send_message(message.chat.id, msg_text, reply_markup=markup_next)
-#             user['callback_source'] = [msg.id]
-#             bot.register_next_step_handler(message, get_overdue_storage, 1, index)
-#         elif step == 1:
-#             user['type'] = message.text
-#             if user['type'] == 'Вперед':
-#                 user['index'] += 1
-#                 # bot.send_message(message.chat.id, f'Вперед', reply_markup=markup_next)
-#                 bot.register_next_step_handler(message, get_overdue_storage, 0, user['index'])
-#             elif user['type'] == 'Назад':
-#                 user['index'] -= 1
-#                 # bot.send_message(message.chat.id, f'Назад', reply_markup=markup_next)
-#                 bot.register_next_step_handler(message, get_overdue_storage, 0, user['index'])
-#             elif user['type'] == 'В меню':
-#                 bot.send_message(message.chat.id, 'Возвращение в меню', reply_markup=markup_admin)
-#                 user['callback'] = None
-#                 user['callback_source'] = []
-#             elif user['type'] == 'Статус 5':
-#                 bot.send_message(message.chat.id, 'Заявка закрыта')
-#                 db.change_status(user['order_id'], 5)
-#                 user['orders'] = db.get_orders_by_status(7)
-#                 bot.register_next_step_handler(message, get_overdue_storage, 0, user['index'])
-#             elif user['type'] == 'Статус 8':
-#                 bot.send_message(message.chat.id, 'Заявка провалена')
-#                 db.change_status(user['order_id'], 8)
-#                 user['orders'] = db.get_orders_by_status(7)
-#                 bot.register_next_step_handler(message, get_overdue_storage, 0, user['index'])
-#             else:
-#                 bot.send_message(message.chat.id, f'{user["type"]}')
-#     else:
-#         bot.send_message(message.chat.id, f'Просроченных заявок нет.', reply_markup=markup_admin)
-#
-#         return
-
-# def get_return_orders(message: telebot.types.Message, step=0):
-#     '''Настроить кнопки для возврата и перезапуска функции'''
-#     user = chats[message.chat.id]
-#     orders = db.get_orders_by_status(3)
-#     if orders:
-#         order = orders[0]
-#         order_id = order['order_id']
-#     else:
-#         bot.send_message(message.chat.id, f'Заявок на возврат нет.', reply_markup=markup_admin)
-#         user['callback'] = None
-#         user['callback_source'] = []
-#         return
-#     if step == 0:
-#         msg_text = ''
-#         for item, value in order.items():
-#             msg_text += f'{item} : {value} \n'
-#         msg = bot.send_message(message.chat.id, msg_text, reply_markup=markup_accept)
-#         user['callback_source'] = [msg.id]
-#         bot.register_next_step_handler(message, get_return_orders, 1)
-#     elif step == 1:
-#         user['type'] = message.text
-#         if user['type'] == 'Подтвердить':
-#             db.change_status(order_id, 2)
-#             bot.send_message(message.chat.id, 'Заявка подтверждена', reply_markup=markup_admin)
-#         elif user['type'] == 'Отклонить':
-#             db.change_status(order_id, 6)
-#             bot.send_message(message.chat.id, f'Заявка отклонена', reply_markup=markup_admin)
-#         elif user['type'] == 'Назад в меню':
-#             bot.send_message(message.chat.id, 'Возвращение в меню', reply_markup=markup_admin)
-#         else:
-#             bot.send_message(message.chat.id, f'{user["type"]}')
-#         user['callback'] = None
-#         user['callback_source'] = []
-#
-#
-# def get_storage_orders(message: telebot.types.Message, step=0):
-#     ''' Нужно добавить проверки вводимых данных и таймауты при необходимости.
-#     Также нужно добавить возможность отменить заявку (поменять статус заявки на статус отмененой заявки(обозначить цифрой))
-#     Еще нужно добавить функцию которая будет удалять заявки с статусом отменене(обозначить цифрой)
-#     Возможно стоить добавить юзеру колонку с счетчиком отклоненных заявок при значение > целевое значение
-#     пользователь с этим id перестает обслуживаться
-#     '''
-#     orders = db.get_orders_by_status(1)
-#     if orders:
-#         order = orders[0]
-#     else:
-#         bot.send_message(message.chat.id, f'Заявок на хранение нет.', reply_markup=markup_admin)
-#         return
-#
-#     order_id = order['order_id']
-#     forwarder_id = message.chat.id
-#     client_phone = order['client_phone']
-#     client_address = order['client_address']
-#     box_number = order['box_number']
-#     value = order['value']
-#     weight = order['weight']
-#     shelf_life = order['shelf_life']
-#     inventory = order['inventory']
-#
-#     user = chats[message.chat.id]
-#     user['callback'] = 'rules_to_client'
-#     if step == 0:
-#         user['name'] = message.text
-#         msg = bot.send_message(
-#             message.chat.id,
-#             f'Текущее значение {client_phone} Введите номер телефона, нажмите  пропустить если указан',
-#             parse_mode='html', reply_markup=markup_skip_or_menu)
-#         user['callback_source'] = [msg.id]
-#         bot.register_next_step_handler(message, get_storage_orders, 1)
-#     if step == 1:
-#         if message.text == 'Пропустить':
-#             user['client_phone'] = None
-#         elif message.text == 'В меню':
-#             bot.send_message(message.chat.id, f'Обратно в меню.', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#         else:
-#              user['client_phone'] = message.text
-#
-#         msg = bot.send_message(
-#             message.chat.id,
-#             f'Текущее значение {inventory} | Введите если опсиь не корректна',
-#             parse_mode='html', reply_markup=markup_skip_or_menu)
-#         user['callback_source'] = [msg.id]
-#         bot.register_next_step_handler(message, get_storage_orders, 2)
-#     elif step == 2:
-#         if message.text == 'Пропустить':
-#             user['inventory'] = None
-#         elif message.text == 'В меню':
-#             bot.send_message(message.chat.id, f'Обратно в меню.', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#         else:
-#             user['inventory'] = message.text
-#
-#         msg = bot.send_message(message.chat.id, f'Текущее значение {value}, ячейка {box_number}'
-#                                                 'Введите цифрой общий объем вещей в м3, устанновленый при замере '
-#                                                 'или нажмите пропустить если установленный объем корректен',
-#                                parse_mode='html', reply_markup=markup_skip_or_menu)
-#         user['callback_source'] = [msg.id, ]
-#         bot.register_next_step_handler(msg, get_storage_orders, 3)
-#
-#     elif step == 3:
-#         try:
-#             user['value'] = int(message.text)
-#         except:
-#             user['value'] = None
-#         if message.text == 'В меню':
-#             bot.send_message(message.chat.id, f'Обратно в меню.', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#
-#         msg = bot.send_message(message.chat.id, f'Текущее значение {weight}'
-#                                                 'Введите цифрой общий вес вещей в кг, сдатых на хранение '
-#                                                 'или нажмите пропустить если вес корректен',
-#                                                 parse_mode='html', reply_markup=markup_skip_or_menu)
-#         user['callback_source'] = [msg.id, ]
-#         bot.register_next_step_handler(msg, get_storage_orders, 4)
-#     elif step == 4:
-#         try:
-#             user['weight'] = int(message.text)
-#         except:
-#             user['weight'] = None
-#         if message.text == 'В меню':
-#             bot.send_message(message.chat.id, f'Обратно в меню.', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#         msg = bot.send_message(message.chat.id, f'Текущее значение {shelf_life}'
-#                                                 'Введите цифрой количество месяцев хранения '
-#                                                 'или нажмите пропустить если значение корректно',
-#                                parse_mode='html', reply_markup=markup_skip_or_menu)
-#         user['callback_source'] = [msg.id, ]
-#         bot.register_next_step_handler(msg, get_storage_orders, 5)
-#     elif step == 5:
-#         try:
-#             user['shelf_life'] = int(message.text)
-#         except:
-#             user['shelf_life'] = None
-#         if message.text == 'В меню':
-#             bot.send_message(message.chat.id, f'Обратно в меню.', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#         msg = bot.send_message(message.chat.id, f'Текущее значение {client_address}'
-#                                                 'Адрес клиента для доставки'
-#                                                 'если корректен или самовывоз нажмите пропустить ',
-#                                parse_mode='html', reply_markup=markup_skip_or_menu)
-#         user['callback_source'] = [msg.id, ]
-#         bot.register_next_step_handler(msg, get_storage_orders, 6)
-#     elif step == 6:
-#         user['address'] = message.text
-#         if message.text == 'В меню':
-#             bot.send_message(message.chat.id, f'Обратно в меню.', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#         if user['shelf_life']:
-#             shelf_life = user['shelf_life']
-#         if user['weight']:
-#             weight = user['weight']
-#         if user['value']:
-#             value = user['value']
-#         if user['client_phone']:
-#             client_phone = user['client_phone']
-#         type = ''
-#         if 500 >= box_number <= 900:
-#             type = 'Бокс'
-#         price = get_price(type, value, weight, shelf_life)
-#
-#         date_reg = dt.date.today()
-#         date_end = date_reg + timedelta(days=shelf_life*30)
-#         status = 2
-#         order.update({
-#             'shelf_life': shelf_life,
-#             'date_end': date_end,
-#             'date_reg': date_reg,
-#             'status': status,
-#             'weight': weight,
-#             'value': value,
-#             'client_phone': client_phone,
-#             'client_address': client_address,
-#             'price': price,
-#             'forwarder_id': forwarder_id,
-#         })
-#         db.update_order_by_order_id(order_id, order)
-#         bot.send_message(message.chat.id, f'Заявка на хранение №{order_id} принята.', reply_markup=markup_admin)
-#         user['callback'] = None
-#         user['callback_source'] = []
-#
-
-# def get_status_info(message: telebot.types.Message):
-#     user = chats[message.chat.id]
-#     status_info = f'''
-# 1 - Необработанный заказ, ожидает принятия админом
-# 2 - Принятый заказ (на складе)
-# 3 - Заказ на возврат, ожидает принятия админом
-# 4 - Заказ на самовывоз, ожидает принятия админом
-# 5 - Закрытый заказ (вещи забрали)
-# 6 - Отмененный заказ
-# 7 - Просроченный заказ (просрок до 6 мес на складе)
-# 8 - Проваленный заказ (не забрали после просрока 6 мес)
-# '''
-#     bot.send_message(message.chat.id, f'{status_info}', reply_markup=markup_admin)
-#     user['callback'] = None
-#     user['callback_source'] = []
-
-#
-#
-# def get_return_orders_delivery(message: telebot.types.Message, step=0):
-#     '''Настроить кнопки для возврата и перезапуска функции'''
-#     user = chats[message.chat.id]
-#     orders = db.get_orders_by_status(4)
-#     if orders:
-#         order = orders[0]
-#         order_id = order['order_id']
-#         client_id = order['client_id']
-#         forwarder_id = order['forwarder_id']
-#     else:
-#         bot.send_message(message.chat.id, f'Заявок на доставку нет.', reply_markup=markup_admin)
-#         user['callback'] = None
-#         user['callback_source'] = []
-#         return
-#     if step == 0:
-#         msg_text = ''
-#         for item, value in order.items():
-#             msg_text += f'{item} : {value} \n'
-#         bot.send_message(message.chat.id, msg_text, reply_markup=markup_accept)
-#         bot.register_next_step_handler(message, get_return_orders_delivery, 1)
-#     elif step == 1:
-#         user['type'] = message.text
-#         if user['type'] == 'Подтвердить':
-#             db.change_status(order_id, 2)
-#             bot.send_message(message.chat.id, 'Заявка подтверждена', reply_markup=markup_admin)
-#         elif user['type'] == 'Отклонить':
-#             db.change_status(order_id, 6)
-#             bot.send_message(client_id, f'''Заявка на доставку отклонена.
-#             Укажите корректный адрес. Id администратора проверившего заявку: {forwarder_id}''')
-#             bot.send_message(message.chat.id, f'Заявка отклонена', reply_markup=markup_admin)
-#         elif user['type'] == 'Назад в меню':
-#             bot.send_message(message.chat.id, 'Возвращение в меню', reply_markup=markup_admin)
-#         else:
-#             bot.send_message(message.chat.id, f'{user["type"]}')
-#         user['callback'] = None
-#         user['callback_source'] = []
-#
-# def add_admin(message: telebot.types.Message, step=0):
-#     user = chats[message.chat.id]
-#     if step == 0:
-#         bot.send_message(message.chat.id, 'Введите id пользователя')
-#         bot.register_next_step_handler(message, add_admin, 1)
-#     if step == 1:
-#         user['tg_user_id'] = message.text
-#         try:
-#             tg_user_id = int(message.text)
-#         except:
-#             bot.send_message(message.chat.id, f'Некорректный id ', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#         access_check = db.get_user_by_chat_id(tg_user_id)
-#         if access_check:
-#             db.change_group(tg_user_id, 2)
-#             bot.send_message(message.chat.id, f'Права обновлены', reply_markup=markup_admin)
-#             user['callback'] = None
-#             user['callback_source'] = []
-#             return
-#         else:
-#             bot.send_message(message.chat.id, 'Введите имя')
-#             bot.register_next_step_handler(message, add_admin, 3)
-#     if step == 3:
-#         name = str(message.text)
-#         user['name'] = name
-#         bot.send_message(message.chat.id, 'Введите телефон')
-#         bot.register_next_step_handler(message, add_admin, 4)
-#     if step == 4:
-#         phone = str(message.text)
-#         user['phone'] = phone
-#         bot.send_message(message.chat.id, f'Введите имя в ТГ {type(phone)}')
-#         bot.register_next_step_handler(message, add_admin, 5)
-#     if step == 5:
-#         tg_name = str(message.text)
-#         user['tg_name'] = tg_name
-#         bot.send_message(message.chat.id, f'''Подтвердите правильность данных:
-#                                             Имя: {user['name']}
-#                                             Телефон: {user['phone']}
-#                                             Имя в ТГ: {user['tg_name']}
-#                                             Id: {user['tg_user_id']}
-#                                             ''', reply_markup=markup_add_admin)
-#         bot.register_next_step_handler(message, add_admin, 6)
-#     if step == 6:
-#         user['type'] = message.text
-#         if user['type'] == 'Принять':
-#             db.add_new_user(user['name'], user['phone'], user['tg_name'], user['tg_user_id'], user_group=2, access=1)
-#             bot.send_message(message.chat.id, f'Администратор {user["tg_user_id"]} добавлен')
-#
-#         else:
-#             bot.send_message(message.chat.id, f'Возвращаемся в меню', reply_markup=markup_admin)
-#         user['callback'] = None
-#         user['callback_source'] = []

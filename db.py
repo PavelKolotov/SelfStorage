@@ -1,5 +1,6 @@
 import sqlite3
 
+
 from globals import USER_NOT_FOUND, ACCESS_DENIED, ACCESS_ALLOWED
 
 
@@ -78,6 +79,7 @@ def add_new_user(name, phone, tg_name, tg_user_id, user_group=1, access=1):
         cur.close()
         return cur.lastrowid
 
+
 def add_new_admin(tg_name, user_group=2, access=1):
     cur: sqlite3.Cursor = con.execute(f"select * "
                                       f"from users where tg_name='{tg_name if tg_name else 0}'")
@@ -134,7 +136,6 @@ def get_user_orders(chat_id):
         WHERE orders.status IN ("1", "2", "3", "4", "7") AND orders.client_id = "{chat_id}"'''
     )
     rows = cur.fetchall()
-
     cur.close()
     return rows
 
@@ -143,7 +144,6 @@ def get_first_order_by_status(status):
     cur: sqlite3.Cursor = con.execute(f'select *  from orders where status={status}')
     row = cur.fetchone()
     cur.close()
-
     return row
 
 
@@ -169,13 +169,11 @@ def change_box_number(order_id, box_number):
     return cur.lastrowid
 
 
-
 def change_group(order_id, group):
     cur = con.execute(f'UPDATE orders SET group = {group} WHERE order_id LIKE "{order_id}"')
     con.commit()
     cur.close()
     return cur.lastrowid
-
 
 
 def change_delyvery_data(order_id, phone, address):
@@ -206,10 +204,7 @@ def update_order_by_order_id(order_id, data):
     order = get_order(order_id)
     order.update(data)
     order = convert_dict(order)
-    cur = con.execute(
-        f"update orders set {order} where order_id={order_id}"
-        )
-
+    cur = con.execute(f"update orders set {order} where order_id={order_id}")
     con.commit()
     cur.close()
     return cur.lastrowid
